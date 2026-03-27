@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">Registration</p>
+        <h2>Add a telemetry device</h2>
+    </div>
+</div>
+
+<form class="form-card" method="post">
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
+    <label for="client_id">Client ID</label>
+    <input id="client_id" name="client_id" placeholder="node_1" required>
+
+    <label for="device_name">Device Name</label>
+    <input id="device_name" name="device_name" placeholder="Edge Node 1" required>
+
+    <label for="ip_address">IP Address</label>
+    <input id="ip_address" name="ip_address" placeholder="192.168.1.10" required>
+
+    <button class="button" type="submit">Register device</button>
+</form>
+{% endblock %}

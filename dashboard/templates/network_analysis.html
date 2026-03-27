@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">Network Analytics</p>
+        <h2>System-wide transport performance</h2>
+    </div>
+</div>
+
+<section class="chart-grid">
+    <article class="card"><h3>Packet Loss</h3><canvas id="networkPacketLossChart"></canvas></article>
+    <article class="card"><h3>Throughput</h3><canvas id="networkThroughputChart"></canvas></article>
+    <article class="card"><h3>Data Rate</h3><canvas id="networkDataRateChart"></canvas></article>
+    <article class="card"><h3>Latency</h3><canvas id="networkLatencyChart"></canvas></article>
+    <article class="card"><h3>Jitter</h3><canvas id="networkJitterChart"></canvas></article>
+    <article class="card"><h3>Update Rate</h3><canvas id="networkUpdateRateChart"></canvas></article>
+</section>
+
+<script src="{{ url_for('static', filename='js/network_analysis.js') }}"></script>
+{% endblock %}

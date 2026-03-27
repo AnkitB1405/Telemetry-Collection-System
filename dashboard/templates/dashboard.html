@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+    <div>
+        <p class="eyebrow">Overview</p>
+        <h2>Distributed telemetry at a glance</h2>
+        <p>Monitor all registered Linux nodes, their health, and network performance from one dashboard.</p>
+    </div>
+</section>
+
+<section class="metrics-grid">
+    <article class="card"><span>Active Devices</span><strong>{{ summary.active_clients }}</strong></article>
+    <article class="card"><span>Average CPU</span><strong>{{ summary.average_cpu }}%</strong></article>
+    <article class="card"><span>Average Memory</span><strong>{{ summary.average_memory }}%</strong></article>
+    <article class="card"><span>Average Disk</span><strong>{{ summary.average_disk }}%</strong></article>
+    <article class="card"><span>Total Packets Received</span><strong>{{ summary.total_packets_received }}</strong></article>
+    <article class="card"><span>Total Packet Loss</span><strong>{{ summary.total_packets_lost }}</strong></article>
+    <article class="card"><span>System Throughput</span><strong>{{ summary.system_throughput }} pkt/s</strong></article>
+    <article class="card"><span>Total Network Traffic</span><strong>{{ summary.total_network_traffic }} bytes</strong></article>
+</section>
+{% endblock %}

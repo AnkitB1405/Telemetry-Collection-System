@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">Inventory</p>
+        <h2>Registered Devices</h2>
+    </div>
+    <a class="button" href="{{ url_for('add_device') }}">Add new device</a>
+</div>
+
+<div class="table-card">
+    <table>
+        <thead>
+            <tr>
+                <th>Device Name</th>
+                <th>Client ID</th>
+                <th>IP</th>
+                <th>Status</th>
+                <th>Last Seen</th>
+                <th>Packet Loss</th>
+                <th>Throughput</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in devices %}
+            <tr>
+                <td>{{ device.device_name }}</td>
+                <td>{{ device.client_id }}</td>
+                <td>{{ device.ip_address }}</td>
+                <td><span class="status {{ device.status }}">{{ device.status }}</span></td>
+                <td>{{ format_timestamp(device.last_seen) }}</td>
+                <td>{{ device.packet_loss }}%</td>
+                <td>{{ device.throughput }} pkt/s</td>
+                <td><a href="{{ url_for('device_detail', client_id=device.client_id) }}">View device details</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8">No devices registered yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

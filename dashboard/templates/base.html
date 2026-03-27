@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Telemetry Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <h1>Telemetry Monitor</h1>
+            <nav>
+                <a href="{{ url_for('dashboard_home') }}">Dashboard</a>
+                <a href="{{ url_for('devices_page') }}">Devices</a>
+                <a href="{{ url_for('network_analysis_page') }}">Network Analysis</a>
+                <a href="{{ url_for('add_device') }}">Add Device</a>
+            </nav>
+        </aside>
+        <main class="content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

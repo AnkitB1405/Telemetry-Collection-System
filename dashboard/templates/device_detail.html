@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+{% if not device %}
+<div class="card">
+    <h2>Device not found</h2>
+    <p>No registered device matches <code>{{ client_id }}</code>.</p>
+</div>
+{% else %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">Device Detail</p>
+        <h2>{{ device.device_name }}</h2>
+        <p>{{ device.client_id }} | {{ device.ip_address }} | <span class="status {{ device.status }}">{{ device.status }}</span></p>
+    </div>
+</div>
+
+<section class="chart-grid">
+    <article class="card"><h3>CPU Usage</h3><canvas id="cpuChart"></canvas></article>
+    <article class="card"><h3>Memory Usage</h3><canvas id="memoryChart"></canvas></article>
+    <article class="card"><h3>Disk Usage</h3><canvas id="diskChart"></canvas></article>
+    <article class="card"><h3>Network Sent / Received</h3><canvas id="networkChart"></canvas></article>
+    <article class="card"><h3>Packet Loss</h3><canvas id="packetLossChart"></canvas></article>
+    <article class="card"><h3>Throughput</h3><canvas id="throughputChart"></canvas></article>
+    <article class="card"><h3>Latency</h3><canvas id="latencyChart"></canvas></article>
+    <article class="card"><h3>Jitter</h3><canvas id="jitterChart"></canvas></article>
+</section>
+
+<script src="{{ url_for('static', filename='js/device_detail.js') }}"></script>
+<script>
+    window.deviceClientId = "{{ client_id }}";
+</script>
+{% endif %}
+{% endblock %}
