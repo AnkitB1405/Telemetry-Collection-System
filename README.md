@@ -131,4 +131,3 @@ The application creates these tables automatically:
 - Packet loss is inferred from sequence gaps per client.
 - `network_stats` stores a new snapshot on each received packet so charts can show historical trends.
 - Device status is computed dynamically from the latest telemetry timestamp.
-to add colab
