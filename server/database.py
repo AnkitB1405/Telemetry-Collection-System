@@ -31,6 +31,7 @@ class TelemetryDatabase:
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     client_id TEXT UNIQUE,
                     device_name TEXT,
+                    display_name TEXT,
                     ip_address TEXT,
                     registered_at INTEGER
                 );
@@ -64,13 +65,19 @@ class TelemetryDatabase:
                 ON telemetry (client_id, sequence);
                 """
             )
+            existing_columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(devices)").fetchall()
+            }
+            if "display_name" not in existing_columns:
+                connection.execute("ALTER TABLE devices ADD COLUMN display_name TEXT")
 
     def register_device(self, client_id: str, device_name: str, ip_address: str) -> None:
         with self.lock, self._connect() as connection:
             connection.execute(
                 """
-                INSERT INTO devices (client_id, device_name, ip_address, registered_at)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO devices (client_id, device_name, display_name, ip_address, registered_at)
+                VALUES (?, ?, NULL, ?, ?)
                 ON CONFLICT(client_id) DO UPDATE SET
                     device_name = excluded.device_name,
                     ip_address = excluded.ip_address,
@@ -78,6 +85,22 @@ class TelemetryDatabase:
                 """,
                 (client_id, device_name, ip_address, int(time.time())),
             )
+
+    def rename_device(self, client_id: str, display_name: str) -> bool:
+        cleaned_name = display_name.strip()
+        if not cleaned_name:
+            return False
+
+        with self.lock, self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE devices
+                SET display_name = ?
+                WHERE client_id = ?
+                """,
+                (cleaned_name, client_id),
+            )
+            return cursor.rowcount > 0
 
     def is_registered(self, client_id: str) -> bool:
         with self.lock, self._connect() as connection:
@@ -193,7 +216,9 @@ class TelemetryDatabase:
                 """
                 SELECT
                     d.client_id,
-                    d.device_name,
+                    d.device_name AS registered_name,
+                    d.display_name,
+                    COALESCE(NULLIF(d.display_name, ''), d.device_name) AS device_name,
                     d.ip_address,
                     t.server_time AS last_seen,
                     ns.packet_loss,
@@ -219,7 +244,7 @@ class TelemetryDatabase:
                     ) lns
                     ON lns.client_id = ns1.client_id AND lns.max_last_updated = ns1.last_updated
                 ) ns ON ns.client_id = d.client_id
-                ORDER BY d.device_name, d.client_id
+                ORDER BY COALESCE(NULLIF(d.display_name, ''), d.device_name), d.client_id
                 """
             ).fetchall()
 
@@ -233,6 +258,8 @@ class TelemetryDatabase:
                 {
                     "client_id": row["client_id"],
                     "device_name": row["device_name"],
+                    "registered_name": row["registered_name"],
+                    "has_custom_name": bool(row["display_name"]),
                     "ip_address": row["ip_address"],
                     "status": status,
                     "last_seen": last_seen,

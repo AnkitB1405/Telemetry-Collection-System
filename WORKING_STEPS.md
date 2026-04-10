@@ -106,6 +106,7 @@ What happens:
   - the CLI `client_id`
   - the client hostname as `device_name`
   - the sender IP address seen by the UDP server
+- If you want a demo-safe label, you can rename the visible device name later from the Devices page
 - The client waits for a `REGISTER_ACK`
 - The client uses `psutil` to collect real system values
 - It reads CPU usage
@@ -180,6 +181,7 @@ This page shows a table with:
 Important point:
 
 - If a client stops sending data for more than 10 seconds, the dashboard marks it as `offline`
+- You can press `Rename` in this table to change the visible label without changing the underlying `client_id`
 
 ## Step 6: Open Device Detail Page
 

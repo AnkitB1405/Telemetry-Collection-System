@@ -340,6 +340,7 @@ Important point:
 
 - The dashboard is now for monitoring and visualization only.
 - Devices appear automatically after the UDP registration handshake.
+- The Devices page can assign a demo-safe display name that overrides the visible hostname without changing the underlying client identity.
 
 ---
 
@@ -419,6 +420,7 @@ Why it is useful:
 - The browser uses Chart.js to render history over time.
 - Update rate charts are derived in the browser from the timestamps of stored network updates.
 - The dashboard includes a `Start Fresh` button that clears telemetry history and network history while keeping registered devices.
+- The dashboard also lets you rename the visible label of a device so demos do not have to expose the real hostname.
 
 ---
 

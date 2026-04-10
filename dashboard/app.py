@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flask import Flask, jsonify, redirect, render_template, url_for
+from flask import Flask, jsonify, redirect, render_template, request, url_for
 
 from server.aggregator import Aggregator
 from server.config import DEFAULT_SERVER_CONFIG, ServerConfig
@@ -72,6 +72,21 @@ def create_app(config: ServerConfig = DEFAULT_SERVER_CONFIG) -> Flask:
     def api_device_metrics(client_id: str):
         history = aggregator.device_history(client_id)
         return jsonify(history)
+
+    @app.route("/api/devices/<client_id>/rename", methods=["POST"])
+    def api_rename_device(client_id: str):
+        payload = request.get_json(silent=True) or {}
+        device_name = str(payload.get("device_name", "")).strip()
+
+        if not device_name:
+            return jsonify({"error": "device name is required"}), 400
+        if len(device_name) > 64:
+            return jsonify({"error": "device name must be 64 characters or fewer"}), 400
+        if not database.rename_device(client_id, device_name):
+            return jsonify({"error": "device not found"}), 404
+
+        updated_device = aggregator.device_details(client_id)
+        return jsonify(updated_device)
 
     @app.route("/api/network-analysis")
     def api_network_analysis():

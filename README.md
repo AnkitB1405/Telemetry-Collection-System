@@ -60,6 +60,7 @@ telemetry-system/
 - Packet loss detection using per-client sequence tracking
 - Throughput, data rate, latency, jitter, and update-rate analysis
 - Offline detection after 10 seconds without telemetry
+- Renameable dashboard display names for demo-safe device labels
 - REST API endpoints for charts and dashboard widgets
 - Flask web dashboard with Chart.js visualizations
 - Threaded UDP packet receiver inside the same application as the dashboard
@@ -97,7 +98,7 @@ For another node on your Tailscale network, use the server's Tailscale IP or Mag
 python -m client.client --client-id node_1 --host <server-tailscale-ip-or-name> --port 9999 --interval 1
 ```
 
-Each client automatically registers over UDP before sending telemetry. The server stores the `client_id`, the client's hostname as `device_name`, and the sender IP address observed by the UDP server.
+Each client automatically registers over UDP before sending telemetry. The server stores the `client_id`, the client's hostname as the registered device name, and the sender IP address observed by the UDP server. You can then rename the visible label from the Devices page without affecting telemetry collection.
 
 You can run multiple clients from different Linux machines by pointing them at the dashboard host.
 
@@ -158,7 +159,7 @@ The client and server use explicit typed JSON messages over UDP:
 
 The application creates these tables automatically:
 
-- `devices(id, client_id, device_name, ip_address, registered_at)`
+- `devices(id, client_id, device_name, display_name, ip_address, registered_at)`
 - `telemetry(id, client_id, sequence, cpu, memory, disk, net_sent, net_recv, timestamp, server_time)`
 - `network_stats(client_id, packets_received, packets_lost, packet_loss, throughput, data_rate, latency, jitter, last_updated)`
 
@@ -166,6 +167,7 @@ The application creates these tables automatically:
 
 - `timestamp` and `server_time` are stored as Unix epoch seconds.
 - Device registration now happens over UDP instead of through the dashboard.
+- The Devices page lets you rename the visible label for a node, which is useful for demo-safe aliases.
 - The client retries registration and telemetry sends up to three times if no valid ACK arrives.
 - `127.0.0.1` and `localhost` only work for same-machine testing. Use a Tailscale IP or MagicDNS name for a remote server.
 - Packet loss is inferred from sequence gaps per client.
