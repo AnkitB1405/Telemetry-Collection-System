@@ -46,6 +46,10 @@ telemetry-system/
 ├── utils/
 │   ├── helpers.py
 │   └── protocol.py
+├── tests/
+│   ├── test_client.py
+│   ├── test_packet_handler.py
+│   └── test_protocol.py
 ├── database/
 │   └── telemetry.db
 ├── requirements.txt
@@ -363,7 +367,25 @@ Current dependencies:
 
 ---
 
-## 17. How the Whole Project Works Together
+## 17. `tests/`
+
+Purpose:
+
+- Verifies that the protocol and current UDP flow behave correctly.
+
+What it contains:
+
+- `test_protocol.py` for message validation and encoding/decoding
+- `test_client.py` for client retry and ACK behavior
+- `test_packet_handler.py` for registration, ACK replies, and duplicate-safe telemetry storage
+
+Why it is useful:
+
+- The tests check the protocol-heavy parts of the project without requiring the full dashboard UI.
+
+---
+
+## 18. How the Whole Project Works Together
 
 ### Step 1: Start the dashboard
 
@@ -392,10 +414,11 @@ Current dependencies:
 - Flask reads data from SQLite through `server/aggregator.py`.
 - The dashboard pages display summary metrics, device status, and charts.
 - The browser uses Chart.js to render history over time.
+- Update rate charts are derived in the browser from the timestamps of stored network updates.
 
 ---
 
-## 18. Short One-Line Summary for Key Modules
+## 19. Short One-Line Summary for Key Modules
 
 - `client/client.py`: registers a client and sends acknowledged telemetry over UDP.
 - `client/metrics.py`: reads real system metrics from the local Linux machine.
@@ -407,4 +430,5 @@ Current dependencies:
 - `server/aggregator.py`: prepares database data for the dashboard.
 - `dashboard/app.py`: runs the Flask dashboard and embedded UDP server.
 - `dashboard/templates/` and `dashboard/static/`: render the monitoring UI.
+- `tests/`: verifies protocol validation, retries, and duplicate-safe ingestion.
 - `requirements.txt`: lists the external Python packages used by the project.

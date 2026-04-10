@@ -50,7 +50,7 @@ source .venv/bin/activate
 Install required packages:
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 The current dependencies are:
@@ -255,7 +255,7 @@ For every received packet, the backend:
 7. Stores the raw telemetry in SQLite if the sequence is new
 8. Compares the new sequence number with the previous one
 9. Detects missing sequence values as packet loss
-10. Calculates throughput, data rate, latency, jitter, and update interval
+10. Calculates throughput, data rate, latency, and jitter
 11. Stores the computed network statistics in SQLite
 12. Replies with an `ACK`
 13. Makes the data available to the dashboard and API
@@ -383,7 +383,7 @@ python -m client.client --client-id node_1 --host 192.168.1.20 --port 9999 --int
 ### Offline detection demo
 
 1. Start the dashboard
-2. Register and run a client
+2. Start and run a client so it registers automatically
 3. Open the Devices page
 4. Stop the client with `Ctrl + C`
 5. Wait about 10 seconds

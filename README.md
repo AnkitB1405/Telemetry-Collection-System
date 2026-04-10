@@ -38,8 +38,15 @@ telemetry-system/
 │   └── telemetry.db
 ├── utils/
 │   ├── __init__.py
-│   └── helpers.py
+│   ├── helpers.py
+│   └── protocol.py
+├── tests/
+│   ├── test_client.py
+│   ├── test_packet_handler.py
+│   └── test_protocol.py
 ├── requirements.txt
+├── WORKING_STEPS.md
+├── PROGRAM_EXPLANATION.md
 └── README.md
 ```
 
@@ -63,7 +70,7 @@ telemetry-system/
 cd telemetry-system
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ## Running the System
