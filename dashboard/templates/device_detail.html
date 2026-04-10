@@ -9,8 +9,18 @@
 <div class="page-header">
     <div>
         <p class="eyebrow">Device Detail</p>
-        <h2>{{ device.device_name }}</h2>
-        <p>{{ device.client_id }} | {{ device.ip_address }} | <span class="status {{ device.status }}">{{ device.status }}</span></p>
+        <h2 id="device-name">{{ device.device_name }}</h2>
+        <p>
+            <span id="device-client-id">{{ device.client_id }}</span>
+            |
+            <span id="device-ip">{{ device.ip_address }}</span>
+            |
+            <span id="device-status" class="status {{ device.status }}">{{ device.status }}</span>
+        </p>
+    </div>
+    <div class="live-pill">
+        <span class="status-dot-live"></span>
+        <span>Charts refresh every 5s</span>
     </div>
 </div>
 

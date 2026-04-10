@@ -6,6 +6,10 @@
         <h2>Registered Devices</h2>
         <p>Devices appear here automatically after they register with the UDP server.</p>
     </div>
+    <div class="live-pill">
+        <span class="status-dot-live"></span>
+        <span>Auto-refreshing every 5s</span>
+    </div>
 </div>
 
 <div class="table-card">
@@ -22,7 +26,7 @@
                 <th>Details</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="devices-table-body">
             {% for device in devices %}
             <tr>
                 <td>{{ device.device_name }}</td>
@@ -40,4 +44,6 @@
         </tbody>
     </table>
 </div>
+
+<script src="{{ url_for('static', filename='js/devices.js') }}"></script>
 {% endblock %}

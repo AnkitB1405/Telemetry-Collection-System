@@ -1,69 +1,201 @@
+const DEVICE_REFRESH_MS = 5000;
+const chartTextColor = getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#e8f3ff";
+const chartMutedColor = getComputedStyle(document.documentElement).getPropertyValue("--muted").trim() || "#91a4c2";
+const chartGridColor = "rgba(255, 255, 255, 0.08)";
+
+Chart.defaults.color = chartTextColor;
+Chart.defaults.borderColor = chartGridColor;
+Chart.defaults.font.family = '"Manrope", sans-serif';
+
+const chartRegistry = {};
+
 async function fetchDeviceMetrics(clientId) {
     const response = await fetch(`/api/devices/${clientId}/metrics`);
     return response.json();
 }
 
-function buildChart(elementId, label, labels, data, color) {
-    new Chart(document.getElementById(elementId), {
-        type: "line",
-        data: {
-            labels,
-            datasets: [{
-                label,
-                data,
-                borderColor: color,
-                backgroundColor: `${color}33`,
-                fill: true,
-                tension: 0.25
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
+async function fetchDeviceSummary(clientId) {
+    const response = await fetch(`/api/devices/${clientId}`);
+    return response.json();
 }
 
-function buildDualChart(elementId, labels, firstLabel, firstData, secondLabel, secondData) {
-    new Chart(document.getElementById(elementId), {
-        type: "line",
-        data: {
-            labels,
-            datasets: [
-                { label: firstLabel, data: firstData, borderColor: "#0f766e", backgroundColor: "#0f766e22", fill: true, tension: 0.25 },
-                { label: secondLabel, data: secondData, borderColor: "#c2410c", backgroundColor: "#c2410c22", fill: true, tension: 0.25 }
-            ]
+function baseChartOptions() {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: "index",
+            intersect: false
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
+        plugins: {
+            legend: {
+                labels: {
+                    color: chartTextColor
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: chartMutedColor,
+                    maxRotation: 0
+                },
+                grid: {
+                    color: chartGridColor
+                }
+            },
+            y: {
+                ticks: {
+                    color: chartMutedColor
+                },
+                grid: {
+                    color: chartGridColor
+                }
+            }
         }
-    });
+    };
 }
 
-async function initDeviceDetail() {
-    const history = await fetchDeviceMetrics(window.deviceClientId);
+function upsertChart(elementId, config) {
+    if (chartRegistry[elementId]) {
+        chartRegistry[elementId].data = config.data;
+        chartRegistry[elementId].options = config.options;
+        chartRegistry[elementId].update();
+        return;
+    }
+
+    chartRegistry[elementId] = new Chart(document.getElementById(elementId), config);
+}
+
+function buildSingleDataset(label, data, color) {
+    return [{
+        label,
+        data,
+        borderColor: color,
+        backgroundColor: `${color}26`,
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 3,
+        tension: 0.28
+    }];
+}
+
+function buildDualDataset(firstLabel, firstData, firstColor, secondLabel, secondData, secondColor) {
+    return [
+        {
+            label: firstLabel,
+            data: firstData,
+            borderColor: firstColor,
+            backgroundColor: `${firstColor}22`,
+            fill: true,
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 3,
+            tension: 0.28
+        },
+        {
+            label: secondLabel,
+            data: secondData,
+            borderColor: secondColor,
+            backgroundColor: `${secondColor}18`,
+            fill: true,
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 3,
+            tension: 0.28
+        }
+    ];
+}
+
+function renderDeviceCharts(history) {
     const telemetry = history.telemetry || [];
     const network = history.network || [];
 
     const telemetryLabels = telemetry.map((item) => new Date(item.server_time * 1000).toLocaleTimeString());
     const networkLabels = network.map((item) => new Date(item.last_updated * 1000).toLocaleTimeString());
-    const updateRate = network.map((item, index) => {
-        if (index === 0) {
-            return 0;
-        }
-        const delta = network[index].last_updated - network[index - 1].last_updated;
-        return delta > 0 ? Number((1 / delta).toFixed(2)) : 0;
-    });
 
-    buildChart("cpuChart", "CPU %", telemetryLabels, telemetry.map((item) => item.cpu), "#0f766e");
-    buildChart("memoryChart", "Memory %", telemetryLabels, telemetry.map((item) => item.memory), "#a16207");
-    buildChart("diskChart", "Disk %", telemetryLabels, telemetry.map((item) => item.disk), "#7c3aed");
-    buildDualChart("networkChart", telemetryLabels, "Net Sent", telemetry.map((item) => item.net_sent), "Net Recv", telemetry.map((item) => item.net_recv));
-    buildChart("packetLossChart", "Packet Loss %", networkLabels, network.map((item) => item.packet_loss), "#b91c1c");
-    buildChart("throughputChart", "Throughput pkt/s", networkLabels, network.map((item) => item.throughput), "#1d4ed8");
-    buildChart("latencyChart", "Latency s", networkLabels, network.map((item) => item.latency), "#0891b2");
-    buildChart("jitterChart", "Jitter s", networkLabels, network.map((item) => item.jitter), "#be185d");
+    upsertChart("cpuChart", {
+        type: "line",
+        data: { labels: telemetryLabels, datasets: buildSingleDataset("CPU %", telemetry.map((item) => item.cpu), "#4ef4ff") },
+        options: baseChartOptions()
+    });
+    upsertChart("memoryChart", {
+        type: "line",
+        data: { labels: telemetryLabels, datasets: buildSingleDataset("Memory %", telemetry.map((item) => item.memory), "#7dffc8") },
+        options: baseChartOptions()
+    });
+    upsertChart("diskChart", {
+        type: "line",
+        data: { labels: telemetryLabels, datasets: buildSingleDataset("Disk %", telemetry.map((item) => item.disk), "#ffd166") },
+        options: baseChartOptions()
+    });
+    upsertChart("networkChart", {
+        type: "line",
+        data: {
+            labels: telemetryLabels,
+            datasets: buildDualDataset(
+                "Net Sent",
+                telemetry.map((item) => item.net_sent),
+                "#3f8cff",
+                "Net Recv",
+                telemetry.map((item) => item.net_recv),
+                "#4ef4ff"
+            )
+        },
+        options: baseChartOptions()
+    });
+    upsertChart("packetLossChart", {
+        type: "line",
+        data: { labels: networkLabels, datasets: buildSingleDataset("Packet Loss %", network.map((item) => item.packet_loss), "#ff6b8f") },
+        options: baseChartOptions()
+    });
+    upsertChart("throughputChart", {
+        type: "line",
+        data: { labels: networkLabels, datasets: buildSingleDataset("Throughput pkt/s", network.map((item) => item.throughput), "#3f8cff") },
+        options: baseChartOptions()
+    });
+    upsertChart("latencyChart", {
+        type: "line",
+        data: { labels: networkLabels, datasets: buildSingleDataset("Latency s", network.map((item) => item.latency), "#c084fc") },
+        options: baseChartOptions()
+    });
+    upsertChart("jitterChart", {
+        type: "line",
+        data: { labels: networkLabels, datasets: buildSingleDataset("Jitter s", network.map((item) => item.jitter), "#7dffc8") },
+        options: baseChartOptions()
+    });
 }
 
-initDeviceDetail();
+async function refreshDeviceDetail() {
+    const [history, device] = await Promise.all([
+        fetchDeviceMetrics(window.deviceClientId),
+        fetchDeviceSummary(window.deviceClientId)
+    ]);
+
+    const nameElement = document.getElementById("device-name");
+    const ipElement = document.getElementById("device-ip");
+    const statusElement = document.getElementById("device-status");
+
+    if (nameElement && device.device_name) {
+        nameElement.textContent = device.device_name;
+    }
+    if (ipElement && device.ip_address) {
+        ipElement.textContent = device.ip_address;
+    }
+    if (statusElement && device.status) {
+        statusElement.textContent = device.status;
+        statusElement.className = `status ${device.status}`;
+    }
+
+    renderDeviceCharts(history);
+}
+
+async function initDeviceDetail() {
+    await refreshDeviceDetail();
+    window.setInterval(() => {
+        refreshDeviceDetail().catch((error) => console.error("device detail refresh failed", error));
+    }, DEVICE_REFRESH_MS);
+}
+
+initDeviceDetail().catch((error) => console.error("initial device detail refresh failed", error));

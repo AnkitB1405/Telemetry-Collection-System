@@ -8,14 +8,29 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <div class="page-glow page-glow-one" aria-hidden="true"></div>
+    <div class="page-glow page-glow-two" aria-hidden="true"></div>
     <div class="app-shell">
         <aside class="sidebar">
-            <h1>Telemetry Monitor</h1>
+            <div class="brand">
+                <p class="brand-mark">TM<span>.</span></p>
+                <div>
+                    <h1>Telemetry Monitor</h1>
+                    <p>Live UDP telemetry control room</p>
+                </div>
+            </div>
             <nav>
-                <a href="{{ url_for('dashboard_home') }}">Dashboard</a>
-                <a href="{{ url_for('devices_page') }}">Devices</a>
-                <a href="{{ url_for('network_analysis_page') }}">Network Analysis</a>
+                <a class="{% if request.path == url_for('dashboard_home') %}active{% endif %}" href="{{ url_for('dashboard_home') }}">Dashboard</a>
+                <a class="{% if request.path == url_for('devices_page') %}active{% endif %}" href="{{ url_for('devices_page') }}">Devices</a>
+                <a class="{% if request.path == url_for('network_analysis_page') %}active{% endif %}" href="{{ url_for('network_analysis_page') }}">Network Analysis</a>
             </nav>
+            <div class="sidebar-footer">
+                <div class="status-chip">
+                    <span class="status-dot-live"></span>
+                    <span>Socket Link Active</span>
+                </div>
+                <p>Registration, ACKs, and metrics stream through the same UDP channel.</p>
+            </div>
         </aside>
         <main class="content">
             {% block content %}{% endblock %}

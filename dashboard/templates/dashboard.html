@@ -1,21 +1,87 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="hero">
-    <div>
+<section class="hero hero-grid">
+    <div class="hero-copy">
         <p class="eyebrow">Overview</p>
         <h2>Distributed telemetry at a glance</h2>
-        <p>Monitor all registered Linux nodes, their health, and network performance from one dashboard.</p>
+        <p>Monitor every registered Linux node, track packet delivery, and watch transport health move in real time without refreshing the page.</p>
+        <div class="hero-actions">
+            <a class="button button-primary" href="{{ url_for('devices_page') }}">Open Device Inventory</a>
+            <div class="live-pill">
+                <span class="status-dot-live"></span>
+                <span>Auto-refreshing every 5s</span>
+            </div>
+        </div>
+    </div>
+    <div class="hero-panel">
+        <p class="eyebrow">Live Control View</p>
+        <h3>Transport loop</h3>
+        <div class="signal-stack">
+            <div class="signal-card">
+                <span class="signal-label">Client</span>
+                <strong>REGISTER</strong>
+            </div>
+            <div class="signal-arrow">-></div>
+            <div class="signal-card accent">
+                <span class="signal-label">Server</span>
+                <strong>REGISTER_ACK</strong>
+            </div>
+            <div class="signal-arrow">-></div>
+            <div class="signal-card">
+                <span class="signal-label">Client</span>
+                <strong>TELEMETRY</strong>
+            </div>
+            <div class="signal-arrow">-></div>
+            <div class="signal-card accent">
+                <span class="signal-label">Server</span>
+                <strong>ACK</strong>
+            </div>
+        </div>
     </div>
 </section>
 
 <section class="metrics-grid">
-    <article class="card"><span>Active Devices</span><strong>{{ summary.active_clients }}</strong></article>
-    <article class="card"><span>Average CPU</span><strong>{{ summary.average_cpu }}%</strong></article>
-    <article class="card"><span>Average Memory</span><strong>{{ summary.average_memory }}%</strong></article>
-    <article class="card"><span>Average Disk</span><strong>{{ summary.average_disk }}%</strong></article>
-    <article class="card"><span>Total Packets Received</span><strong>{{ summary.total_packets_received }}</strong></article>
-    <article class="card"><span>Total Packet Loss</span><strong>{{ summary.total_packets_lost }}</strong></article>
-    <article class="card"><span>System Throughput</span><strong>{{ summary.system_throughput }} pkt/s</strong></article>
-    <article class="card"><span>Total Network Traffic</span><strong>{{ summary.total_network_traffic }} bytes</strong></article>
+    <article class="card metric-card">
+        <span class="metric-label">Active Devices</span>
+        <strong id="summary-active_clients">{{ summary.active_clients }}</strong>
+        <small>Clients seen within the live timeout window</small>
+    </article>
+    <article class="card metric-card">
+        <span class="metric-label">Average CPU</span>
+        <strong id="summary-average_cpu">{{ summary.average_cpu }}%</strong>
+        <small>Current load across active nodes</small>
+    </article>
+    <article class="card metric-card">
+        <span class="metric-label">Average Memory</span>
+        <strong id="summary-average_memory">{{ summary.average_memory }}%</strong>
+        <small>RAM usage averaged across latest samples</small>
+    </article>
+    <article class="card metric-card">
+        <span class="metric-label">Average Disk</span>
+        <strong id="summary-average_disk">{{ summary.average_disk }}%</strong>
+        <small>Root filesystem pressure across devices</small>
+    </article>
+    <article class="card metric-card">
+        <span class="metric-label">Total Packets Received</span>
+        <strong id="summary-total_packets_received">{{ summary.total_packets_received }}</strong>
+        <small>All acknowledged telemetry stored so far</small>
+    </article>
+    <article class="card metric-card">
+        <span class="metric-label">Total Packet Loss</span>
+        <strong id="summary-total_packets_lost">{{ summary.total_packets_lost }}</strong>
+        <small>Sequence gaps inferred by the server</small>
+    </article>
+    <article class="card metric-card">
+        <span class="metric-label">System Throughput</span>
+        <strong id="summary-system_throughput">{{ summary.system_throughput }} pkt/s</strong>
+        <small>Combined packet rate across clients</small>
+    </article>
+    <article class="card metric-card">
+        <span class="metric-label">Total Network Traffic</span>
+        <strong id="summary-total_network_traffic">{{ summary.total_network_traffic }} bytes</strong>
+        <small>Latest sent and received counters combined</small>
+    </article>
 </section>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}
