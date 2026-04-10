@@ -9,6 +9,7 @@ import time
 
 from server.config import ServerConfig
 from server.packet_handler import PacketHandler, PacketValidationError
+from utils.protocol import encode_message
 
 
 class TelemetryUDPServer:
@@ -56,7 +57,9 @@ class TelemetryUDPServer:
 
     def _process_packet(self, payload: bytes, address: tuple[str, int], server_time: int) -> None:
         try:
-            self.packet_handler.process(payload, address, server_time)
+            result = self.packet_handler.process(payload, address, server_time)
+            if result.reply is not None:
+                self.socket.sendto(encode_message(result.reply), address)
         except PacketValidationError as exc:
             self.logger.warning("invalid packet from %s:%s - %s", address[0], address[1], exc)
         except Exception:

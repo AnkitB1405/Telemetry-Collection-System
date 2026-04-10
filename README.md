@@ -47,8 +47,8 @@ telemetry-system/
 
 - Real Linux telemetry collection with `psutil`
 - JSON-over-UDP telemetry transport
-- Manual device registration through the dashboard
-- Telemetry acceptance only for registered `client_id` values
+- Socket-based device registration and handshake
+- Application-level UDP ACKs with bounded retries
 - SQLite persistence for devices, telemetry, and network statistics
 - Packet loss detection using per-client sequence tracking
 - Throughput, data rate, latency, jitter, and update-rate analysis
@@ -76,20 +76,43 @@ python -m dashboard.app
 
 Open the dashboard at `http://127.0.0.1:5000`.
 
-Register devices from the dashboard before starting clients. Only registered `client_id` values are accepted by the UDP server.
-
 Start a client:
 
 ```bash
 python -m client.client --client-id node_1 --host 127.0.0.1 --port 9999 --interval 1
 ```
 
+Each client automatically registers over UDP before sending telemetry. The server stores the `client_id`, the client's hostname as `device_name`, and the sender IP address observed by the UDP server.
+
 You can run multiple clients from different Linux machines by pointing them at the dashboard host.
 
-## Telemetry Packet Format
+## UDP Message Types
+
+The client and server use explicit typed JSON messages over UDP:
+
+- `REGISTER`: client announces itself before telemetry starts
+- `REGISTER_ACK`: server confirms registration
+- `TELEMETRY`: client sends one telemetry sample with a sequence number
+- `ACK`: server acknowledges a telemetry sample
+
+## Packet Format Examples
+
+### `REGISTER`
 
 ```json
 {
+  "type": "REGISTER",
+  "client_id": "node_1",
+  "device_name": "lab-node-1",
+  "timestamp": 1710000000
+}
+```
+
+### `TELEMETRY`
+
+```json
+{
+  "type": "TELEMETRY",
   "client_id": "node_1",
   "sequence": 1001,
   "cpu": 45.5,
@@ -105,7 +128,6 @@ You can run multiple clients from different Linux machines by pointing them at t
 
 - `/` dashboard overview
 - `/devices` registered device inventory
-- `/devices/add` manual registration form
 - `/devices/<client_id>` device detail page with charts
 - `/network` network analysis page
 
@@ -128,6 +150,8 @@ The application creates these tables automatically:
 ## Notes
 
 - `timestamp` and `server_time` are stored as Unix epoch seconds.
+- Device registration now happens over UDP instead of through the dashboard.
+- The client retries registration and telemetry sends up to three times if no valid ACK arrives.
 - Packet loss is inferred from sequence gaps per client.
 - `network_stats` stores a new snapshot on each received packet so charts can show historical trends.
 - Device status is computed dynamically from the latest telemetry timestamp.

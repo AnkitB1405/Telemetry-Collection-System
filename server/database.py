@@ -59,6 +59,9 @@ class TelemetryDatabase:
                     jitter REAL,
                     last_updated INTEGER
                 );
+
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_telemetry_client_sequence
+                ON telemetry (client_id, sequence);
                 """
             )
 
@@ -70,7 +73,8 @@ class TelemetryDatabase:
                 VALUES (?, ?, ?, ?)
                 ON CONFLICT(client_id) DO UPDATE SET
                     device_name = excluded.device_name,
-                    ip_address = excluded.ip_address
+                    ip_address = excluded.ip_address,
+                    registered_at = excluded.registered_at
                 """,
                 (client_id, device_name, ip_address, int(time.time())),
             )
@@ -83,11 +87,11 @@ class TelemetryDatabase:
             ).fetchone()
             return row is not None
 
-    def insert_telemetry(self, packet: Dict[str, Any], server_time: int) -> None:
+    def insert_telemetry(self, packet: Dict[str, Any], server_time: int) -> bool:
         with self.lock, self._connect() as connection:
-            connection.execute(
+            cursor = connection.execute(
                 """
-                INSERT INTO telemetry (
+                INSERT OR IGNORE INTO telemetry (
                     client_id, sequence, cpu, memory, disk, net_sent, net_recv, timestamp, server_time
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
@@ -103,6 +107,7 @@ class TelemetryDatabase:
                     server_time,
                 ),
             )
+            return cursor.rowcount > 0
 
     def insert_network_stats(self, client_id: str, stats: Dict[str, Any], last_updated: int) -> None:
         with self.lock, self._connect() as connection:

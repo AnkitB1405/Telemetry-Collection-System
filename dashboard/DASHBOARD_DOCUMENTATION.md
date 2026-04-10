@@ -291,7 +291,6 @@ app.config["udp_server"] = udp_server
 - Dashboard (home)
 - Devices (inventory)
 - Network Analysis
-- Add Device
 
 #### `dashboard.html` - Home Page
 
@@ -313,7 +312,7 @@ app.config["udp_server"] = udp_server
 - Table with 8 columns
 - Status badges (online/offline)
 - Links to device detail pages
-- "Add new device" button
+- Automatic device discovery after UDP registration
 - Empty state message
 
 #### `device_detail.html` - Per-Device View
@@ -567,7 +566,7 @@ All endpoints return JSON.
 |-------|--------|----------|-------------|
 | `/` | GET | `dashboard.html` | Home page with summary metrics |
 | `/devices` | GET | `devices.html` | Device inventory table |
-| `/devices/add` | GET/POST | `add_device.html` | Device registration form |
+| `/devices/add` | GET/POST | redirect | Legacy route redirected to `/devices` |
 | `/devices/<client_id>` | GET | `device_detail.html` | Per-device charts |
 | `/network` | GET | `network_analysis.html` | System-wide network analysis |
 
@@ -583,8 +582,8 @@ All endpoints return JSON.
    - System-wide aggregated metrics
 
 2. **Device Management**
-   - Manual device registration via web form
-   - IP address validation (IPv4/IPv6)
+   - Automatic device registration via UDP handshake
+   - Sender IP captured from the UDP socket address
    - Device inventory with status indicators
    - Per-device detail pages
 
@@ -705,14 +704,12 @@ Open browser to: `http://127.0.0.1:5000`
 
 ### Register Devices
 
-1. Navigate to: `http://127.0.0.1:5000/devices/add`
-2. Enter device details:
-   - Client ID: `node_1`
-   - Device Name: `Lab Node 1`
-   - IP Address: `192.168.1.10`
-3. Click "Register device"
+Start a telemetry client with a `client_id`. The client automatically sends a UDP `REGISTER` message before telemetry begins.
 
-**Important:** Devices MUST be registered before clients can send telemetry. Unregistered clients are rejected.
+**Important:** Registration is now part of the socket protocol. The server stores:
+- `client_id` from the CLI
+- `device_name` from the client hostname
+- `ip_address` from the UDP sender address
 
 ### Start Telemetry Clients
 
@@ -725,7 +722,7 @@ python -m client.client --client-id node_1 --host <SERVER_IP> --port 9999 --inte
 ```
 
 **Parameters:**
-- `--client-id`: Must match registered device
+- `--client-id`: Unique client identifier used during UDP registration
 - `--host`: Dashboard server IP address
 - `--port`: UDP server port (default: 9999)
 - `--interval`: Seconds between packets (default: 1)
@@ -739,10 +736,31 @@ python -m client.client --client-id node_1 --host <SERVER_IP> --port 9999 --inte
 
 ## Telemetry Packet Format
 
-### JSON Structure
+### Message Types
+
+The UDP protocol now uses explicit typed JSON messages:
+
+- `REGISTER`
+- `REGISTER_ACK`
+- `TELEMETRY`
+- `ACK`
+
+### `REGISTER`
 
 ```json
 {
+  "type": "REGISTER",
+  "client_id": "node_1",
+  "device_name": "lab-node-1",
+  "timestamp": 1710000000
+}
+```
+
+### `TELEMETRY`
+
+```json
+{
+  "type": "TELEMETRY",
   "client_id": "node_1",
   "sequence": 1001,
   "cpu": 45.5,
@@ -754,26 +772,15 @@ python -m client.client --client-id node_1 --host <SERVER_IP> --port 9999 --inte
 }
 ```
 
-### Field Descriptions
-
-| Field | Type | Range | Description |
-|-------|------|-------|-------------|
-| `client_id` | string | - | Unique device identifier |
-| `sequence` | integer | ≥0 | Incrementing packet counter |
-| `cpu` | float | 0-100 | CPU usage percentage |
-| `memory` | float | 0-100 | RAM usage percentage |
-| `disk` | float | 0-100 | Disk usage percentage |
-| `net_sent` | integer | ≥0 | Cumulative bytes sent |
-| `net_recv` | integer | ≥0 | Cumulative bytes received |
-| `timestamp` | integer | - | Unix epoch (client time) |
-
 ### Validation Rules
 
-- All fields are required
+- Every message must include a valid `type`
+- `REGISTER` must include `client_id`, `device_name`, and `timestamp`
+- `TELEMETRY` must include all telemetry fields and a non-negative `sequence`
 - `cpu`, `memory`, `disk` must be 0-100
-- `sequence` must be non-negative
 - `net_sent`, `net_recv` must be non-negative
-- `client_id` must be registered in database
+- `TELEMETRY` packets are accepted only after successful registration
+- The server replies with `REGISTER_ACK` and `ACK` so the client can retry safely
 
 ---
 

@@ -4,8 +4,8 @@
     <div>
         <p class="eyebrow">Inventory</p>
         <h2>Registered Devices</h2>
+        <p>Devices appear here automatically after they register with the UDP server.</p>
     </div>
-    <a class="button" href="{{ url_for('add_device') }}">Add new device</a>
 </div>
 
 <div class="table-card">
@@ -35,7 +35,7 @@
                 <td><a href="{{ url_for('device_detail', client_id=device.client_id) }}">View device details</a></td>
             </tr>
             {% else %}
-            <tr><td colspan="8">No devices registered yet.</td></tr>
+            <tr><td colspan="8">No devices registered yet. Start a client to register automatically.</td></tr>
             {% endfor %}
         </tbody>
     </table>

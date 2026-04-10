@@ -9,7 +9,8 @@ This project demonstrates:
 - UDP socket programming
 - Multiple Linux telemetry clients sending real system metrics
 - A central threaded UDP receiver
-- Manual device registration through a Flask dashboard
+- Socket-based registration and handshake over UDP
+- Application-level acknowledgements for UDP telemetry
 - SQLite-based telemetry and network statistics storage
 - Packet loss detection using sequence numbers
 - Network monitoring using throughput, data rate, latency, jitter, and update rate
@@ -83,32 +84,7 @@ Important point:
 - In this version, the UDP server and dashboard are not separate programs
 - Starting the dashboard also starts the telemetry receiver
 
-## Step 2: Register Devices from the Dashboard
-
-Open the browser and go to:
-
-```text
-http://127.0.0.1:5000/devices/add
-```
-
-Enter:
-
-- `client_id`
-- `device_name`
-- `ip_address`
-
-Example:
-
-- `client_id`: `node_1`
-- `device_name`: `Lab Node 1`
-- `ip_address`: `127.0.0.1`
-
-Why this step matters:
-
-- The server only accepts telemetry from registered `client_id` values
-- Unregistered clients are ignored by the packet handler
-
-## Step 3: Start the First Telemetry Client
+## Step 2: Start the First Telemetry Client
 
 Open a second terminal and run:
 
@@ -120,17 +96,25 @@ python -m client.client --client-id node_1 --host 127.0.0.1 --port 9999 --interv
 
 What happens:
 
+- The client first sends a `REGISTER` message over UDP
+- The server automatically creates or updates the device record using:
+  - the CLI `client_id`
+  - the client hostname as `device_name`
+  - the sender IP address seen by the UDP server
+- The client waits for a `REGISTER_ACK`
 - The client uses `psutil` to collect real system values
 - It reads CPU usage
 - It reads memory usage
 - It reads disk usage
 - It reads total network bytes sent and received
-- It creates a JSON packet with a sequence number and timestamp
-- It sends one UDP packet every second
+- It creates a `TELEMETRY` JSON packet with a sequence number and timestamp
+- It waits for an `ACK` from the server for each telemetry packet
+- If no valid ACK arrives, it retries the same packet up to three times
+- It sends one acknowledged UDP packet every second under normal conditions
 
-## Step 4: Start More Clients
+## Step 3: Start More Clients
 
-To demonstrate distributed behavior, register more devices first in the dashboard and then start more clients in separate terminals.
+To demonstrate distributed behavior, start more clients in separate terminals. Each one will register automatically with the UDP server.
 
 Example:
 
@@ -145,7 +129,7 @@ Why this is important:
 - The backend tracks each client independently
 - The dashboard aggregates overall behavior across all registered devices
 
-## Step 5: Observe the Dashboard Home Page
+## Step 4: Observe the Dashboard Home Page
 
 Visit:
 
@@ -170,7 +154,7 @@ How to explain it:
 - The dashboard reads the latest telemetry and latest network statistics per device
 - It computes current system-wide summary values
 
-## Step 6: Observe the Devices Page
+## Step 5: Observe the Devices Page
 
 Visit:
 
@@ -192,7 +176,7 @@ Important point:
 
 - If a client stops sending data for more than 10 seconds, the dashboard marks it as `offline`
 
-## Step 7: Open Device Detail Page
+## Step 6: Open Device Detail Page
 
 Click on any device from the Devices page or open:
 
@@ -217,7 +201,7 @@ How to explain it:
 - Derived network values come from the `network_stats` table
 - Chart.js fetches data from the Flask REST API and renders it in the browser
 
-## Step 8: Open Network Analysis Page
+## Step 7: Open Network Analysis Page
 
 Visit:
 
@@ -247,27 +231,34 @@ Use this flow while presenting:
 
 Each Linux client repeatedly:
 
-1. Collects real system telemetry using `psutil`
-2. Adds its `client_id`
-3. Adds an incrementing `sequence`
-4. Adds the current Unix timestamp
-5. Converts the packet into JSON
-6. Sends it to the central server using UDP
+1. Sends a `REGISTER` message to the server when it starts
+2. Waits for a `REGISTER_ACK`
+3. Collects real system telemetry using `psutil`
+4. Adds its `client_id`
+5. Adds an incrementing `sequence`
+6. Adds the current Unix timestamp
+7. Converts the `TELEMETRY` message into JSON
+8. Sends it to the central server using UDP
+9. Waits for an `ACK`
+10. Retries the same message up to three times if no ACK arrives
 
 ### B. Server Side
 
 For every received packet, the backend:
 
 1. Receives the UDP packet
-2. Decodes the JSON payload
-3. Validates required fields and value ranges
-4. Checks whether the `client_id` is registered
-5. Stores the raw telemetry in SQLite
-6. Compares the new sequence number with the previous one
-7. Detects missing sequence values as packet loss
-8. Calculates throughput, data rate, latency, jitter, and update interval
-9. Stores the computed network statistics in SQLite
-10. Makes the data available to the dashboard and API
+2. Decodes the typed JSON payload
+3. Checks the message `type`
+4. For `REGISTER`, stores the device and replies with `REGISTER_ACK`
+5. For `TELEMETRY`, validates required fields and value ranges
+6. Checks whether the `client_id` is registered
+7. Stores the raw telemetry in SQLite if the sequence is new
+8. Compares the new sequence number with the previous one
+9. Detects missing sequence values as packet loss
+10. Calculates throughput, data rate, latency, jitter, and update interval
+11. Stores the computed network statistics in SQLite
+12. Replies with an `ACK`
+13. Makes the data available to the dashboard and API
 
 ### C. Dashboard Side
 
@@ -367,9 +358,10 @@ The UDP listener and Flask app stop together because they run in the same proces
 
 - UDP is connectionless and lightweight
 - UDP does not guarantee delivery, ordering, or retransmission
+- This project implements registration and acknowledgements at the application layer
 - Sequence tracking is used to infer packet loss
 - The client sends real machine metrics rather than simulated values
-- Device registration improves safety by allowing only known clients
+- Device registration now happens through the socket protocol itself
 - SQLite gives persistent storage for telemetry history
 - Flask and Chart.js make the system easy to demonstrate visually
 - The design is modular because client, server, database, and dashboard logic are separated into different files
@@ -401,8 +393,8 @@ python -m client.client --client-id node_1 --host 192.168.1.20 --port 9999 --int
 
 This project now demonstrates a complete telemetry monitoring workflow:
 
-- Linux clients collect and send real telemetry data
-- A threaded UDP backend receives and validates JSON packets
+- Linux clients register and send real telemetry data over UDP
+- A threaded UDP backend receives and validates typed JSON packets
 - The backend stores raw and computed metrics in SQLite
 - Packet loss and network behavior are tracked per device
 - A Flask dashboard presents both system-wide and per-device monitoring views

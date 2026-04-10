@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import ipaddress
-
-from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask import Flask, jsonify, redirect, render_template, url_for
 
 from server.aggregator import Aggregator
 from server.config import DEFAULT_SERVER_CONFIG, ServerConfig
@@ -41,25 +39,7 @@ def create_app(config: ServerConfig = DEFAULT_SERVER_CONFIG) -> Flask:
 
     @app.route("/devices/add", methods=["GET", "POST"])
     def add_device():
-        error = None
-        if request.method == "POST":
-            client_id = request.form.get("client_id", "").strip()
-            device_name = request.form.get("device_name", "").strip()
-            ip_address = request.form.get("ip_address", "").strip()
-
-            if not client_id or not device_name or not ip_address:
-                error = "All fields are required."
-            else:
-                try:
-                    ipaddress.ip_address(ip_address)
-                except ValueError:
-                    error = "Please provide a valid IPv4 or IPv6 address."
-
-            if error is None:
-                database.register_device(client_id, device_name, ip_address)
-                return redirect(url_for("devices_page"))
-
-        return render_template("add_device.html", error=error)
+        return redirect(url_for("devices_page"))
 
     @app.route("/devices/<client_id>")
     def device_detail(client_id: str):
