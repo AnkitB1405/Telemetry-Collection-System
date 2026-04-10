@@ -131,6 +131,11 @@ class TelemetryDatabase:
                 ),
             )
 
+    def clear_runtime_data(self) -> None:
+        with self.lock, self._connect() as connection:
+            connection.execute("DELETE FROM telemetry")
+            connection.execute("DELETE FROM network_stats")
+
     def fetch_dashboard_summary(self, offline_after_seconds: int) -> Dict[str, Any]:
         now = int(time.time())
         with self.lock, self._connect() as connection:

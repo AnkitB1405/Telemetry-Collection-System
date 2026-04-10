@@ -68,6 +68,7 @@ What it does:
 
 - Creates a UDP socket.
 - Uses the CLI `client_id`.
+- Uses the CLI `host` and `port` to choose the telemetry server target.
 - Reads the local hostname and uses it as `device_name`.
 - Sends a `REGISTER` message to the server when it starts.
 - Waits for a `REGISTER_ACK`.
@@ -124,6 +125,7 @@ What it contains:
 Why it is useful:
 
 - Client behavior can be adjusted without changing the main client logic.
+- `127.0.0.1` is useful for same-machine testing, while a Tailscale IP or MagicDNS name is needed for a remote server.
 
 ---
 
@@ -396,6 +398,7 @@ Why it is useful:
 ### Step 2: Start a client
 
 - `client/client.py` creates a UDP socket.
+- If the server is remote, the client should target the server's Tailscale IP or MagicDNS name rather than `127.0.0.1`.
 - It sends a `REGISTER` message.
 - The server replies with `REGISTER_ACK`.
 - The device is now known to the system.
@@ -415,6 +418,7 @@ Why it is useful:
 - The dashboard pages display summary metrics, device status, and charts.
 - The browser uses Chart.js to render history over time.
 - Update rate charts are derived in the browser from the timestamps of stored network updates.
+- The dashboard includes a `Start Fresh` button that clears telemetry history and network history while keeping registered devices.
 
 ---
 

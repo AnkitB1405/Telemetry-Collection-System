@@ -94,6 +94,11 @@ source .venv/bin/activate
 python -m client.client --client-id node_1 --host 127.0.0.1 --port 9999 --interval 1
 ```
 
+Important host note:
+
+- Use `127.0.0.1` only if the dashboard/server is running on the same machine
+- For a remote server on Tailscale, use the server's Tailscale IP or MagicDNS name instead
+
 What happens:
 
 - The client first sends a `REGISTER` message over UDP
@@ -377,7 +382,7 @@ python -m client.client --client-id node_1 --host 127.0.0.1 --port 9999 --interv
 ### Remote server demo
 
 ```bash
-python -m client.client --client-id node_1 --host 192.168.1.20 --port 9999 --interval 1
+python -m client.client --client-id node_1 --host <server-tailscale-ip-or-name> --port 9999 --interval 1
 ```
 
 ### Offline detection demo
@@ -389,7 +394,18 @@ python -m client.client --client-id node_1 --host 192.168.1.20 --port 9999 --int
 5. Wait about 10 seconds
 6. Show that the device status changes from `online` to `offline`
 
-## 12. Summary
+## 12. Troubleshooting Registration Timeouts
+
+If the client prints repeated `REGISTER` attempts and never receives `REGISTER_ACK`, check:
+
+- the dashboard/server is actually running
+- the client `--host` points to the correct machine
+- UDP port `9999` is reachable
+- you are not using `127.0.0.1` when the server is on another Tailscale node
+
+The dashboard also includes a `Start Fresh` button that clears stored telemetry and network history while keeping registered devices.
+
+## 13. Summary
 
 This project now demonstrates a complete telemetry monitoring workflow:
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import logging
 import socket
 import time
@@ -52,6 +53,13 @@ class TelemetryClient:
         )
 
     def send_forever(self) -> None:
+        if self._is_loopback_target():
+            self.logger.warning(
+                "server host %s points to loopback. This only works when the dashboard/server runs on the same machine. "
+                "For another node, use the server's Tailscale IP or MagicDNS name.",
+                self.config.server_host,
+            )
+
         self.logger.info(
             "registering %s (%s) with %s:%s",
             self.config.client_id,
@@ -60,7 +68,16 @@ class TelemetryClient:
             self.config.server_port,
         )
         if not self.register_with_server():
-            self.logger.error("unable to register client %s after %s attempts", self.config.client_id, MAX_SEND_ATTEMPTS)
+            self.logger.error(
+                "unable to register client %s with %s:%s after %s attempts. "
+                "Likely causes: wrong host/IP, dashboard/server not running, UDP port %s unreachable, or using %s for a remote server.",
+                self.config.client_id,
+                self.config.server_host,
+                self.config.server_port,
+                MAX_SEND_ATTEMPTS,
+                self.config.server_port,
+                self.config.server_host,
+            )
             self.socket.close()
             return
 
@@ -89,9 +106,25 @@ class TelemetryClient:
             packet = self.build_register_packet()
             self._send_packet(packet)
             self.logger.info("sent REGISTER attempt %s/%s", attempt, MAX_SEND_ATTEMPTS)
+            self.logger.info(
+                "waiting for REGISTER_ACK from %s:%s (attempt %s/%s)",
+                self.config.server_host,
+                self.config.server_port,
+                attempt,
+                MAX_SEND_ATTEMPTS,
+            )
 
             if self._wait_for_register_ack():
                 return True
+
+            self.logger.warning(
+                "timed out waiting for REGISTER_ACK from %s:%s after %.1fs (attempt %s/%s)",
+                self.config.server_host,
+                self.config.server_port,
+                self.config.socket_timeout,
+                attempt,
+                MAX_SEND_ATTEMPTS,
+            )
 
         return False
 
@@ -150,6 +183,16 @@ class TelemetryClient:
 
                 self.logger.warning("received mismatched %s message: %s", expected_type, message)
         except socket.timeout:
+            return False
+
+    def _is_loopback_target(self) -> bool:
+        host = self.config.server_host.strip().lower()
+        if host == "localhost":
+            return True
+
+        try:
+            return ipaddress.ip_address(host).is_loopback
+        except ValueError:
             return False
 
 

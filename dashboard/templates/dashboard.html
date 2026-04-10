@@ -7,6 +7,7 @@
         <p>Monitor every registered Linux node, track packet delivery, and watch transport health move in real time without refreshing the page.</p>
         <div class="hero-actions">
             <a class="button button-primary" href="{{ url_for('devices_page') }}">Open Device Inventory</a>
+            <button class="button button-danger" id="reset-dashboard-data" type="button">Start Fresh</button>
             <div class="live-pill">
                 <span class="status-dot-live"></span>
                 <span>Auto-refreshing every 5s</span>
@@ -39,6 +40,8 @@
         </div>
     </div>
 </section>
+
+<p class="action-note" id="reset-dashboard-status">Start Fresh clears stored telemetry and network history while keeping registered devices.</p>
 
 <section class="metrics-grid">
     <article class="card metric-card">

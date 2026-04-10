@@ -26,6 +26,9 @@ class SequenceTracker:
     def __init__(self) -> None:
         self.clients: Dict[str, ClientSequenceState] = {}
 
+    def reset(self) -> None:
+        self.clients.clear()
+
     def record(self, client_id: str, sequence: int, packet_size: int, client_timestamp: int, server_time: int) -> Dict[str, float]:
         now = float(server_time)
         state = self.clients.setdefault(client_id, ClientSequenceState())

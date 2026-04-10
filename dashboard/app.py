@@ -24,6 +24,7 @@ def create_app(config: ServerConfig = DEFAULT_SERVER_CONFIG) -> Flask:
     app.config["server_config"] = config
     app.config["database"] = database
     app.config["aggregator"] = aggregator
+    app.config["tracker"] = tracker
     app.config["udp_server"] = udp_server
     app.jinja_env.globals["format_timestamp"] = format_timestamp
 
@@ -75,6 +76,12 @@ def create_app(config: ServerConfig = DEFAULT_SERVER_CONFIG) -> Flask:
     @app.route("/api/network-analysis")
     def api_network_analysis():
         return jsonify(aggregator.network_analysis())
+
+    @app.route("/api/reset-data", methods=["POST"])
+    def api_reset_data():
+        database.clear_runtime_data()
+        tracker.reset()
+        return jsonify({"status": "ok"})
 
     return app
 

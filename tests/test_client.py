@@ -56,12 +56,12 @@ class TelemetryClientTests(unittest.TestCase):
             "timestamp": 1710000000,
         }
 
-    def _build_client(self, fake_socket: FakeSocket) -> TelemetryClient:
+    def _build_client(self, fake_socket: FakeSocket, config: ClientConfig | None = None) -> TelemetryClient:
         with patch("client.client.socket.socket", return_value=fake_socket), patch(
             "client.client.socket.gethostname",
             return_value="lab-node",
         ), patch("client.client.collect_metrics", return_value=self.metrics):
-            return TelemetryClient(self.config)
+            return TelemetryClient(config or self.config)
 
     def test_register_retries_until_register_ack_arrives(self) -> None:
         fake_socket = FakeSocket(
@@ -104,6 +104,31 @@ class TelemetryClientTests(unittest.TestCase):
 
         self.assertFalse(acknowledged)
         self.assertEqual(len(fake_socket.sent_packets), 3)
+
+    def test_send_forever_warns_about_loopback_host_for_remote_use(self) -> None:
+        fake_socket = FakeSocket([socket.timeout(), socket.timeout(), socket.timeout()])
+        client = self._build_client(fake_socket)
+
+        with self.assertLogs("telemetry.client", level="WARNING") as captured:
+            client.send_forever()
+
+        output = "\n".join(captured.output)
+        self.assertIn("points to loopback", output)
+        self.assertIn("Tailscale IP or MagicDNS name", output)
+
+    def test_send_forever_logs_actionable_registration_failure(self) -> None:
+        config = ClientConfig(client_id="node_1", server_host="100.64.0.5", server_port=9999, send_interval=1.0)
+        fake_socket = FakeSocket([socket.timeout(), socket.timeout(), socket.timeout()])
+        client = self._build_client(fake_socket, config=config)
+
+        with self.assertLogs("telemetry.client", level="INFO") as captured:
+            client.send_forever()
+
+        output = "\n".join(captured.output)
+        self.assertIn("waiting for REGISTER_ACK from 100.64.0.5:9999", output)
+        self.assertIn("unable to register client node_1 with 100.64.0.5:9999 after 3 attempts", output)
+        self.assertIn("wrong host/IP", output)
+        self.assertIn("UDP port 9999 unreachable", output)
 
 
 if __name__ == "__main__":
