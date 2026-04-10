@@ -161,4 +161,4 @@ The application creates these tables automatically:
 - The client retries registration and telemetry sends up to three times if no valid ACK arrives.
 - Packet loss is inferred from sequence gaps per client.
 - `network_stats` stores a new snapshot on each received packet so charts can show historical trends.
-- Device status is computed dynamically from the latest telemetry timestamp.
+
