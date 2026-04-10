@@ -4,12 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Telemetry Monitor</title>
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem("dashboard-theme");
+            const theme = savedTheme === "dark" ? "dark" : "light";
+            document.documentElement.setAttribute("data-theme", theme);
+        }());
+    </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="page-glow page-glow-one" aria-hidden="true"></div>
-    <div class="page-glow page-glow-two" aria-hidden="true"></div>
     <div class="app-shell">
         <aside class="sidebar">
             <div class="brand">
@@ -25,6 +30,7 @@
                 <a class="{% if request.path == url_for('network_analysis_page') %}active{% endif %}" href="{{ url_for('network_analysis_page') }}">Network Analysis</a>
             </nav>
             <div class="sidebar-footer">
+                <button type="button" class="button theme-toggle" id="theme-toggle">Dark Theme</button>
                 <div class="status-chip">
                     <span class="status-dot-live"></span>
                     <span>Socket Link Active</span>
@@ -36,5 +42,6 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
 </body>
 </html>

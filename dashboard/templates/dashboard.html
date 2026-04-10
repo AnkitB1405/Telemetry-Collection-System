@@ -1,47 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="hero hero-grid">
+<section class="hero">
     <div class="hero-copy">
         <p class="eyebrow">Overview</p>
         <h2>Distributed telemetry at a glance</h2>
         <p>Monitor every registered Linux node, track packet delivery, and watch transport health move in real time without refreshing the page.</p>
         <div class="hero-actions">
             <a class="button button-primary" href="{{ url_for('devices_page') }}">Open Device Inventory</a>
-            <button class="button button-danger" id="reset-dashboard-data" type="button">Start Fresh</button>
+            <button class="button button-danger" id="reset-dashboard-data" type="button">Refresh</button>
             <div class="live-pill">
                 <span class="status-dot-live"></span>
                 <span>Auto-refreshing every 5s</span>
             </div>
         </div>
     </div>
-    <div class="hero-panel">
-        <p class="eyebrow">Live Control View</p>
-        <h3>Transport loop</h3>
-        <div class="signal-stack">
-            <div class="signal-card">
-                <span class="signal-label">Client</span>
-                <strong>REGISTER</strong>
-            </div>
-            <div class="signal-arrow">-></div>
-            <div class="signal-card accent">
-                <span class="signal-label">Server</span>
-                <strong>REGISTER_ACK</strong>
-            </div>
-            <div class="signal-arrow">-></div>
-            <div class="signal-card">
-                <span class="signal-label">Client</span>
-                <strong>TELEMETRY</strong>
-            </div>
-            <div class="signal-arrow">-></div>
-            <div class="signal-card accent">
-                <span class="signal-label">Server</span>
-                <strong>ACK</strong>
-            </div>
-        </div>
-    </div>
 </section>
 
-<p class="action-note" id="reset-dashboard-status">Start Fresh clears stored telemetry and network history while keeping registered devices.</p>
+<p class="action-note" id="reset-dashboard-status">Refresh clears stored telemetry and network history while keeping registered devices.</p>
 
 <section class="metrics-grid">
     <article class="card metric-card">
